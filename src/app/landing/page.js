@@ -5,10 +5,9 @@ import { useEffect, useRef, useState } from "react";
 export default function LandingTestPage() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
-  const [error, setError] = useState(null);
   const [searchParams, setSearchParams] = useState({});
+  const [error, setError] = useState(null);
   const [capturedImage, setCapturedImage] = useState(null);
-  const [showVideo, setShowVideo] = useState(true);
 
   const startCamera = async () => {
     try {
@@ -33,12 +32,18 @@ export default function LandingTestPage() {
 
       const dataUrl = canvas.toDataURL("image/png");
       setCapturedImage(dataUrl);
-      setShowVideo(false);
 
-      // Stop video stream
-      const stream = video.srcObject;
-      const tracks = stream?.getTracks();
-      tracks?.forEach(track => track.stop());
+      // Send to iOS
+      window.webkit?.messageHandlers?.iosListener?.postMessage({
+        type: "captureComplete",
+        payload: {
+          name: searchParams.name,
+          sessionId: searchParams.sessionId,
+          environment: searchParams.environment,
+          configuration: searchParams.configuration,
+          image: dataUrl,
+        },
+      });
     }
   };
 
@@ -62,26 +67,26 @@ export default function LandingTestPage() {
       <p>Name: <strong>{searchParams.name}</strong></p>
       <p>Session ID: <strong>{searchParams.sessionId}</strong></p>
 
-      {/* Camera or Captured Image */}
-      <div className="w-64 h-48 bg-black rounded overflow-hidden border-2 border-white flex items-center justify-center">
-        {showVideo ? (
-          <video ref={videoRef} autoPlay muted playsInline
-          className="w-64 h-48 rounded object-cover border-2 border-white" />
-        ) : capturedImage ? (
-          <img src={capturedImage} alt="Captured" className="w-full h-full object-cover" />
-        ) : null}
-      </div>
+      <video
+        ref={videoRef}
+        autoPlay
+        muted
+        playsInline
+        className="w-64 h-48 rounded object-cover border-2 border-white"
+      />
 
       <button
         onClick={captureImage}
-        disabled={!showVideo}
-        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded mt-2 disabled:opacity-50"
+        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
       >
         Capture Photo
       </button>
 
-      <canvas ref={canvasRef} className="hidden" />
+      {capturedImage && (
+        <img src={capturedImage} alt="Captured" className="w-64 h-auto rounded border" />
+      )}
 
+      <canvas ref={canvasRef} className="hidden" />
       {error && <p className="text-red-500">{error}</p>}
     </div>
   );
