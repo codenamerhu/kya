@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect, useRef, useCallback } from "react";
 import * as faceapi from "face-api.js";
 
@@ -5,7 +7,7 @@ const useLivenessCheck = () => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [currentInstructionIndex, setCurrentInstructionIndex] = useState<number | null>(null);
-  const [completedInstructions, setCompletedInstructions] = useState([]);
+  const [completedInstructions, setCompletedInstructions] = useState<number[]>([]);
   const [isLivenessVerified, setIsLivenessVerified] = useState(false);
   const [loading, setLoading] = useState(true);
   const [flashing, setFlashing] = useState(false);
@@ -28,40 +30,33 @@ const useLivenessCheck = () => {
   ];
 
   const loadModels = useCallback(async () => {
-    setLoading(true);
     try {
       await faceapi.nets.tinyFaceDetector.loadFromUri("/models");
       await faceapi.nets.faceLandmark68Net.loadFromUri("/models");
 
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-
-        await videoRef.current.play().catch(err => {
-          console.warn("Video playback error:", err);
-        });
-
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          await videoRef.current.play().catch((e) => console.warn("Playback error:", e));
-        }
+        await videoRef.current.play().catch(err => console.warn("Playback error:", err));
+        console.log("Camera started and playing.");
       }
     } catch (error) {
-      console.error("Camera or model loading error:", error);
-      alert("Unable to access camera. Please check your permissions or HTTPS connection.");
+      console.error("Camera or model load error:", error);
+      alert("Unable to access camera. Please check your permissions or HTTPS.");
     } finally {
       setLoading(false);
     }
   }, []);
 
   const pickRandomInstruction = useCallback(() => {
-    const availableInstructions = instructions
-      .map((inst, i) => i)
+    const available = instructions
+      .map((_, i) => i)
       .filter(i => !completedInstructions.includes(i));
 
-    if (availableInstructions.length > 0) {
-      const randomIndex = availableInstructions[Math.floor(Math.random() * availableInstructions.length)];
-      setCurrentInstructionIndex(randomIndex);
+    if (available.length > 0) {
+      const next = available[Math.floor(Math.random() * available.length)];
+      setCurrentInstructionIndex(next);
     } else {
       setIsLivenessVerified(true);
     }
@@ -76,16 +71,15 @@ const useLivenessCheck = () => {
 
     if (detections.length > 0) {
       const landmarks = detections[0].landmarks;
-      const canvasCtx = canvasRef.current.getContext("2d");
-
+      const ctx = canvasRef.current.getContext("2d");
       const dims = faceapi.matchDimensions(canvasRef.current, videoRef.current, true);
       const resized = faceapi.resizeResults(detections, dims);
-      canvasCtx?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+      ctx?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
       faceapi.draw.drawDetections(canvasRef.current, resized);
       faceapi.draw.drawFaceLandmarks(canvasRef.current, resized);
 
       switch (currentInstructionIndex) {
-        case 0: { // Open mouth
+        case 0: {
           const d = landmarks.positions[66].y - landmarks.positions[62].y;
           if (d > mouthOpenThreshold && !openMouthDone.current) {
             openMouthDone.current = true;
@@ -94,7 +88,7 @@ const useLivenessCheck = () => {
           }
           break;
         }
-        case 1: { // Blink twice
+        case 1: {
           const l = landmarks.positions[41].y - landmarks.positions[37].y;
           const r = landmarks.positions[47].y - landmarks.positions[43].y;
           if (l < eyeClosedThreshold && r < eyeClosedThreshold && !blinkStarted.current) {
@@ -110,7 +104,7 @@ const useLivenessCheck = () => {
           }
           break;
         }
-        case 2: { // Nod
+        case 2: {
           const noseY = landmarks.positions[30].y;
           if (initialNoseY.current === null) {
             initialNoseY.current = noseY;
@@ -121,28 +115,27 @@ const useLivenessCheck = () => {
           }
           break;
         }
-        default:
-          break;
       }
     }
   }, [currentInstructionIndex]);
 
+  // Wait for video to mount before loading models
   useEffect(() => {
     const waitForVideo = setInterval(() => {
       if (videoRef.current) {
-        loadModels(); // only run when video element is mounted
+        loadModels();
         clearInterval(waitForVideo);
       }
     }, 100);
-  
+
     return () => clearInterval(waitForVideo);
   }, [loadModels]);
 
   useEffect(() => {
-    if (currentInstructionIndex === null) {
+    if (currentInstructionIndex === null && !isLivenessVerified) {
       pickRandomInstruction();
     }
-  }, [currentInstructionIndex, pickRandomInstruction]);
+  }, [currentInstructionIndex, pickRandomInstruction, isLivenessVerified]);
 
   useEffect(() => {
     if (currentInstructionIndex !== null) {
@@ -153,7 +146,7 @@ const useLivenessCheck = () => {
   }, [currentInstructionIndex]);
 
   useEffect(() => {
-    const interval = setInterval(() => detectFace(), 100);
+    const interval = setInterval(() => detectFace(), 150);
     return () => clearInterval(interval);
   }, [detectFace]);
 
