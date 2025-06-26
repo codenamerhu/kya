@@ -8,6 +8,7 @@ export default function LandingTestPage() {
   const [error, setError] = useState(null);
   const [searchParams, setSearchParams] = useState({});
   const [capturedImage, setCapturedImage] = useState(null);
+  const [showVideo, setShowVideo] = useState(true);
 
   const startCamera = async () => {
     try {
@@ -23,13 +24,21 @@ export default function LandingTestPage() {
   const captureImage = () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
+
     if (video && canvas) {
       const context = canvas.getContext("2d");
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
       const dataUrl = canvas.toDataURL("image/png");
       setCapturedImage(dataUrl);
+      setShowVideo(false);
+
+      // Stop video stream
+      const stream = video.srcObject;
+      const tracks = stream?.getTracks();
+      tracks?.forEach(track => track.stop());
     }
   };
 
@@ -46,33 +55,33 @@ export default function LandingTestPage() {
   }, []);
 
   return (
-    <div className="w-screen h-screen bg-gray-900 text-white flex flex-col items-center justify-center space-y-4 p-4">
+    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4 space-y-4">
       <h1 className="text-3xl font-bold">Liveness Test</h1>
       <p>Environment: <strong>{searchParams.environment}</strong></p>
       <p>Config: <strong>{searchParams.configuration}</strong></p>
       <p>Name: <strong>{searchParams.name}</strong></p>
       <p>Session ID: <strong>{searchParams.sessionId}</strong></p>
 
-      <video ref={videoRef} autoPlay className="w-80 h-60 rounded shadow border-2 border-white" />
+      {/* Camera or Captured Image */}
+      <div className="w-64 h-48 bg-black rounded overflow-hidden border-2 border-white flex items-center justify-center">
+        {showVideo ? (
+          <video ref={videoRef} autoPlay muted className="w-full h-full object-cover" />
+        ) : capturedImage ? (
+          <img src={capturedImage} alt="Captured" className="w-full h-full object-cover" />
+        ) : null}
+      </div>
 
       <button
         onClick={captureImage}
-        className="mt-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+        disabled={!showVideo}
+        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded mt-2 disabled:opacity-50"
       >
         Capture Photo
       </button>
 
       <canvas ref={canvasRef} className="hidden" />
 
-      {capturedImage && (
-        <img
-          src={capturedImage}
-          alt="Captured"
-          className="mt-4 w-80 h-auto rounded border"
-        />
-      )}
-
-      {error && <p className="text-red-500 mt-2">{error}</p>}
+      {error && <p className="text-red-500">{error}</p>}
     </div>
   );
 }
