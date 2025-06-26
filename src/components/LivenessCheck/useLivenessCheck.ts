@@ -37,6 +37,10 @@ const useLivenessCheck = () => {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
 
+        await videoRef.current.play().catch(err => {
+          console.warn("Video playback error:", err);
+        });
+
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           await videoRef.current.play().catch((e) => console.warn("Playback error:", e));
@@ -124,7 +128,14 @@ const useLivenessCheck = () => {
   }, [currentInstructionIndex]);
 
   useEffect(() => {
-    loadModels();
+    const waitForVideo = setInterval(() => {
+      if (videoRef.current) {
+        loadModels(); // only run when video element is mounted
+        clearInterval(waitForVideo);
+      }
+    }, 100);
+  
+    return () => clearInterval(waitForVideo);
   }, [loadModels]);
 
   useEffect(() => {
