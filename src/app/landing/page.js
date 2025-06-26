@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
-export default function LivenessTestPage() {
+export default function LandingTestPage() {
   const videoRef = useRef(null);
   const [error, setError] = useState(null);
   const params = useSearchParams();
