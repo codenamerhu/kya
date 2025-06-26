@@ -6,12 +6,7 @@ import { useSearchParams } from "next/navigation";
 export default function LandingTestPage() {
   const videoRef = useRef(null);
   const [error, setError] = useState(null);
-  const params = useSearchParams();
-
-  const configuration = params.get("configuration");
-  const environment = params.get("environment");
-  const name = params.get("name");
-  const sessionId = params.get("sessionId");
+  const [searchParams, setSearchParams] = useState({});
 
   const startCamera = async () => {
     try {
@@ -25,6 +20,14 @@ export default function LandingTestPage() {
   };
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setSearchParams({
+      configuration: params.get("configuration"),
+      environment: params.get("environment"),
+      name: params.get("name"),
+      sessionId: params.get("sessionId"),
+    });
+  
     startCamera();
   }, []);
 
@@ -32,10 +35,10 @@ export default function LandingTestPage() {
     
     <div className="w-screen h-screen bg-gray-900 text-white flex flex-col items-center justify-center space-y-6 p-4">
       <h1 className="text-3xl font-bold">Liveness Test</h1>
-      <p>Environment: <strong>{environment}</strong></p>
-      <p>Config: <strong>{configuration}</strong></p>
-      <p>Name: <strong>{name}</strong></p>
-      <p>Session ID: <strong>{sessionId}</strong></p>
+      <p>Environment: <strong>{searchParams.environment}</strong></p>
+      <p>Config: <strong>{searchParams.configuration}</strong></p>
+      <p>Name: <strong>{searchParams.name}</strong></p>
+      <p>Session ID: <strong>{searchParams.sessionId}</strong></p>
 
       <video ref={videoRef} autoPlay className="w-80 h-60 rounded shadow border-2 border-white" />
 
