@@ -13,7 +13,7 @@ const LivenessCheck = () => {
   } = useLivenessCheck();
 
   return (
-    <div className="relative w-screen h-dvh overflow-hidden">
+    <div className="relative w-screen h-screen overflow-hidden bg-black">
       {loading ? (
         <div className="flex justify-center items-center h-full">
           <div className="loading loading-spinner loading-lg"></div>

@@ -36,6 +36,11 @@ const useLivenessCheck = () => {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play().catch((e) => console.warn("Playback error:", e));
+        }
       }
     } catch (error) {
       console.error("Camera or model loading error:", error);
