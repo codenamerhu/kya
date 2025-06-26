@@ -29,11 +29,11 @@ export default function LivenessTestPage() {
         <div className="text-red-500">{error}</div>
       ) : (
         <video
-          ref={videoRef}
-          autoPlay
-          muted
-          playsInline
-          className="w-full h-full object-cover"
+        ref={videoRef}
+        autoPlay
+        muted
+        playsInline
+        className="w-64 h-48 rounded object-cover border-2 border-white"
         />
       )}
     </div>
