@@ -65,7 +65,8 @@ export default function LandingTestPage() {
       {/* Camera or Captured Image */}
       <div className="w-64 h-48 bg-black rounded overflow-hidden border-2 border-white flex items-center justify-center">
         {showVideo ? (
-          <video ref={videoRef} autoPlay muted className="w-full h-full object-cover" />
+          <video ref={videoRef} autoPlay muted playsInline
+          className="w-64 h-48 rounded object-cover border-2 border-white" />
         ) : capturedImage ? (
           <img src={capturedImage} alt="Captured" className="w-full h-full object-cover" />
         ) : null}
