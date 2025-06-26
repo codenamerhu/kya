@@ -29,6 +29,8 @@ export default function LandingTestPage() {
   }, []);
 
   return (
+    <>
+    <Suspense fallback={<div className="text-white">Loading...</div>}>
     <div className="w-screen h-screen bg-gray-900 text-white flex flex-col items-center justify-center space-y-6 p-4">
       <h1 className="text-3xl font-bold">Liveness Test</h1>
       <p>Environment: <strong>{environment}</strong></p>
@@ -40,5 +42,7 @@ export default function LandingTestPage() {
 
       {error && <p className="text-red-500">{error}</p>}
     </div>
+    </Suspense>
+    </>
   );
 }
