@@ -39,13 +39,13 @@ const useLivenessCheck = () => {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play().catch(err => console.warn("Playback error:", err));
-        console.log("Camera started and playing.");
+        console.log("Camera stream started.");
       }
     } catch (error) {
       console.error("Camera or model load error:", error);
-      alert("Unable to access camera. Please check your permissions or HTTPS.");
+      alert("Camera setup failed: " + error.message);
     } finally {
-      setLoading(false);
+      setLoading(false); // ✅ Prevent infinite loading
     }
   }, []);
 
@@ -119,16 +119,17 @@ const useLivenessCheck = () => {
     }
   }, [currentInstructionIndex]);
 
-  // Wait for video to mount before loading models
   useEffect(() => {
-    const waitForVideo = setInterval(() => {
+    // Delay load until videoRef is mounted
+    const timeout = setTimeout(() => {
       if (videoRef.current) {
         loadModels();
-        clearInterval(waitForVideo);
+      } else {
+        setLoading(false); // Fail-safe
       }
-    }, 100);
+    }, 500);
 
-    return () => clearInterval(waitForVideo);
+    return () => clearTimeout(timeout);
   }, [loadModels]);
 
   useEffect(() => {
